@@ -1,0 +1,186 @@
+/* HEALTHBIRCH Brand Color Palette:
+   - Primary (Deep Navy): #0A1F44 — Main brand color, headings, buttons, logo.
+   - Primary Dark (#061530): Hover/pressed state for primary.
+   - Primary Light (#EEF2FA): Subtle backgrounds, badges, tinted sections.
+   - Secondary (Soft Blue): #3B82F6 — CTAs, links, interactive accents.
+   - Secondary Light (#60A5FA): Hover highlights on secondary elements.
+   - Accent (Purple): #7C3AED — Small highlights and badges ONLY (not large surfaces).
+   - Accent Light (#9333EA): Hover state on accent.
+   - Success (Emerald): #10B981 — Positive status, confirmations.
+   - Warning (Amber): #F59E0B — Caution and pending states.
+   - Danger (Red): #EF4444 — Errors and cancellations.
+   - Emergency (Critical Red): #DC2626 — High-severity alerts.
+   - Background (#061530): Main page background (dark navy).
+   - Section (#F8FAFF): Navy-tinted section backgrounds.
+   - Text Primary (#0A1F44): Same as brand navy for headings.
+   - Text Secondary (#64748B): Muted slate for body/labels.
+
+   CSS Variable Fallbacks (reference):
+   --color-primary: #0A1F44;
+   --color-primary-dark: #061530;
+   --color-primary-light: #EEF2FA;
+   --color-secondary: #3B82F6;
+   --color-secondary-light: #60A5FA;
+   --color-accent: #7C3AED;
+   --color-accent-light: #9333EA;
+   --radius-card-sm: 16px;
+   --radius-card-md: 20px;
+   --radius-card-lg: 24px;
+   --shadow-card: 0 4px 24px -4px rgba(10,31,68,0.08), 0 1px 4px rgba(10,31,68,0.04);
+   --shadow-soft: 0 2px 12px rgba(10,31,68,0.06);
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary:        #0d1b3e;
+  --color-primary-dark:   #0a0a0f;
+  --color-primary-light:  #1e293b;
+  --color-secondary:      #60A5FA;
+  --color-secondary-light:#93C5FD;
+  --color-accent:         #7C3AED;
+  --color-accent-light:   #9333EA;
+  --radius-card-sm:       16px;
+  --radius-card-md:       20px;
+  --radius-card-lg:       24px;
+  --shadow-card:          0 8px 32px -6px rgba(0,0,0,0.5);
+  --shadow-soft:          0 4px 16px rgba(0,0,0,0.3);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply font-sans text-white antialiased min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#0d1b3e] to-[#0a0a0f];
+  }
+}
+
+
+@layer components {
+  .card {
+    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-card-lg shadow-[0_8px_32px_-6px_rgba(0,0,0,0.5)] transition-all duration-300 hover:shadow-[0_12px_40px_-6px_rgba(96,165,250,0.12)] hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.06];
+  }
+  .glass-panel {
+    @apply bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] shadow-[0_8px_32px_rgba(0,0,0,0.4)];
+  }
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary to-[#0f244e] text-white px-6 py-2.5 rounded-full font-semibold hover:opacity-95 hover:-translate-y-0.5 active:scale-95 transition-all duration-300 shadow-[0_4px_14px_0_rgba(0,0,0,0.4)] hover:shadow-[0_6px_20px_rgba(96,165,250,0.15)];
+  }
+  .btn-outline {
+    @apply border-2 border-white/10 text-white bg-white/5 backdrop-blur-sm px-6 py-2.5 rounded-full font-semibold hover:bg-white/10 hover:border-white/20 active:scale-95 transition-all duration-300;
+  }
+  .input-base {
+    @apply w-full rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-sm px-4 py-2.5 text-sm text-white placeholder-slate-500 transition-all duration-200 focus:border-secondary focus:bg-white/10 focus:outline-none focus:ring-4 focus:ring-secondary/10 hover:border-secondary/50;
+  }
+  .chat-bubble-user {
+    @apply ml-auto max-w-[85%] break-words rounded-2xl rounded-tr-sm bg-gradient-to-br from-secondary to-secondary-light px-4 py-3 text-sm text-white shadow-md shadow-secondary/15;
+  }
+  .chat-bubble-ai {
+    @apply mr-auto max-w-[85%] break-words rounded-2xl rounded-tl-sm bg-white/[0.04] backdrop-blur-sm border border-white/[0.08] px-4 py-3 text-sm text-slate-300 shadow-sm;
+  }
+}
+
+@keyframes floatSoft {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(2deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes bobSoft {
+  0% { transform: translateY(0px); box-shadow: 0 10px 40px -10px rgba(10,31,68,0.12); }
+  50% { transform: translateY(-12px); box-shadow: 0 20px 50px -10px rgba(10,31,68,0.2); }
+  100% { transform: translateY(0px); box-shadow: 0 10px 40px -10px rgba(10,31,68,0.12); }
+}
+
+@keyframes heroGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes drawLine {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+.float-soft { animation: floatSoft 6s ease-in-out infinite; }
+.bob-soft { animation: bobSoft 6s ease-in-out infinite; }
+.bg-animated-hero { 
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 25%, #020817 50%, var(--color-primary) 75%, var(--color-primary-dark) 100%); 
+  background-size: 300% 300%; 
+  animation: heroGradientShift 15s ease-in-out infinite; 
+}
+.animate-draw-line { animation: drawLine 900ms ease-out forwards; }
+
+@keyframes chatFadeUp {
+  0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.chat-fade-up { animation: chatFadeUp 350ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+
+.typing-dot { animation: typingBounce 1.2s infinite ease-in-out; }
+
+@keyframes recommendationSlideUp {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.recommendation-slide-up { animation: recommendationSlideUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes aiWidgetPulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(10, 31, 68, 0.45); }
+  70% { box-shadow: 0 0 0 16px rgba(10, 31, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(10, 31, 68, 0); }
+}
+
+.ai-widget-pulse { animation: aiWidgetPulseRing 2.5s infinite; }
+
+@keyframes pageFadeSlideUp {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter { animation: pageFadeSlideUp 300ms ease-out both; }
+
+/* Galaxy/nebula animation for Login brand panel */
+@keyframes galaxyOrbit1 {
+  0%   { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+@keyframes galaxyOrbit2 {
+  0%   { transform: rotate(60deg) translateX(200px) rotate(-60deg); }
+  100% { transform: rotate(420deg) translateX(200px) rotate(-420deg); }
+}
+@keyframes galaxyOrbit3 {
+  0%   { transform: rotate(180deg) translateX(80px) rotate(-180deg); }
+  100% { transform: rotate(540deg) translateX(80px) rotate(-540deg); }
+}
+@keyframes galaxyPulse {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(1.08); }
+}
+@keyframes nebulaRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0; }
+  50%       { opacity: 1; }
+}
+
+.galaxy-orb-1 { animation: galaxyOrbit1 18s linear infinite; }
+.galaxy-orb-2 { animation: galaxyOrbit2 28s linear infinite; }
+.galaxy-orb-3 { animation: galaxyOrbit3 13s linear infinite; }
+.galaxy-core  { animation: galaxyPulse 4s ease-in-out infinite; }
+.nebula-ring  { animation: nebulaRotate 40s linear infinite; }
