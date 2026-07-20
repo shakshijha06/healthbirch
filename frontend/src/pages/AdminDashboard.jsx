@@ -99,6 +99,8 @@ const AdminDashboard = () => {
   const [editForm, setEditForm] = useState({});
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [deleteError, setDeleteError] = useState('');
 
   const handleChange = (e) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -159,14 +161,15 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete Dr. ${name}?`)) return;
+  const handleDelete = async (id) => {
+    setDeleteError('');
     try {
       await api.delete(`/api/doctors/${id}`);
       setDoctors((prev) => prev.filter((doctor) => doctor.id !== id));
+      setDeleteConfirmId(null);
     } catch (err) {
       console.error(err);
-      alert('Failed to delete doctor.');
+      setDeleteError('Failed to delete doctor. Please try again.');
     }
   };
 
@@ -373,7 +376,7 @@ const AdminDashboard = () => {
                             <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
                               <button onClick={() => setActiveCardDoctor(doctor)} className="flex-1 md:flex-none border-2 border-primary/20 bg-white text-primary-dark px-4 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-primary/5 transition text-center whitespace-nowrap">View Card</button>
                               <button onClick={() => openEditModal(doctor)} className="p-2 border-2 border-blue-200 text-blue-500 rounded-full hover:bg-blue-50 transition" title="Edit Doctor"><Pencil className="w-4 h-4" /></button>
-                              <button onClick={() => handleDelete(doctor.id, doctor.name)} className="p-2 border-2 border-red-200 text-red-500 rounded-full hover:bg-red-50 transition"><Trash2 className="w-4 h-4" /></button>
+                              {deleteConfirmId === doctor.id ? (<div className="flex items-center gap-1"><button onClick={() => handleDelete(doctor.id)} className="px-3 py-1.5 rounded-full bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition">Confirm</button><button onClick={() => setDeleteConfirmId(null)} className="px-3 py-1.5 rounded-full border border-slate-200 text-slate-500 text-xs font-bold hover:bg-slate-50 transition">Cancel</button></div>) : (<button onClick={() => setDeleteConfirmId(doctor.id)} className="p-2 border-2 border-red-200 text-red-500 rounded-full hover:bg-red-50 transition"><Trash2 className="w-4 h-4" /></button>)}
                             </div>
                           </div>
                         ))
@@ -382,6 +385,12 @@ const AdminDashboard = () => {
                   )}
                 </div>
               </section>
+            </div>
+          )}
+          {deleteError && (
+            <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-3 rounded-2xl bg-red-500/10 border border-red-500/20 px-5 py-3 text-sm text-red-300 font-semibold shadow-xl backdrop-blur-sm">
+              <span>{deleteError}</span>
+              <button type="button" onClick={() => setDeleteError('')} className="text-red-400 hover:text-red-200 text-lg leading-none">&times;</button>
             </div>
           )}
 

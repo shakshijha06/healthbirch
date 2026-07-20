@@ -144,6 +144,11 @@ const PatientDashboard = () => {
   // Review Modal State
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewPayload, setReviewPayload] = useState({ doctorId: null, doctorName: '', rating: 5, comment: '' });
+  const [reviewStatus, setReviewStatus] = useState(null); // null | 'submitting' | 'success' | 'error'
+
+  // Cancel appointment inline confirmation state
+  const [cancelConfirmId, setCancelConfirmId] = useState(null);
+  const [cancelError, setCancelError] = useState('');
 
   // Settings state
   const [emailNotif, setEmailNotif] = useState(() => localStorage.getItem('hb_emailNotif') !== 'false');
@@ -334,28 +339,33 @@ const PatientDashboard = () => {
   };
 
   const cancelAppointment = async (id) => {
-    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+    setCancelError('');
     try {
       await api.patch(`/api/appointments/${id}/status`, { status: 'cancelled' });
       setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: 'cancelled' } : a)));
+      setCancelConfirmId(null);
     } catch (err) {
       console.error(err);
-      alert('Failed to cancel appointment.');
+      setCancelError('Failed to cancel appointment. Please try again.');
     }
   };
 
   const submitReview = async () => {
+    setReviewStatus('submitting');
     try {
       await api.post(`/api/doctors/${reviewPayload.doctorId}/reviews`, {
         rating: reviewPayload.rating,
         comment: reviewPayload.comment,
       });
-      alert('Review submitted successfully!');
-      setReviewModalOpen(false);
+      setReviewStatus('success');
       fetchAppointments();
+      setTimeout(() => {
+        setReviewModalOpen(false);
+        setReviewStatus(null);
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert('Failed to submit review. Try again.');
+      setReviewStatus('error');
     }
   };
 
@@ -1426,9 +1436,17 @@ const PatientDashboard = () => {
               <textarea rows={3} value={reviewPayload.comment} onChange={(e) => setReviewPayload({ ...reviewPayload, comment: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-secondary resize-none font-semibold" placeholder="Share details of your experience..." />
             </div>
 
+            {reviewStatus === 'success' && (
+              <p className="text-sm text-emerald-400 font-semibold text-center mb-3">✓ Review submitted successfully!</p>
+            )}
+            {reviewStatus === 'error' && (
+              <p className="text-sm text-red-400 font-semibold text-center mb-3">Failed to submit. Please try again.</p>
+            )}
             <div className="flex gap-3 justify-end">
-              <Button variant="secondary" className="rounded-full px-5 hover:bg-white/5 text-slate-300 border-white/10" onClick={() => setReviewModalOpen(false)}>Cancel</Button>
-              <Button className="rounded-full px-5 shadow-md" onClick={submitReview}>Submit Review</Button>
+              <Button variant="secondary" className="rounded-full px-5 hover:bg-white/5 text-slate-300 border-white/10" onClick={() => { setReviewModalOpen(false); setReviewStatus(null); }}>Cancel</Button>
+              <Button className="rounded-full px-5 shadow-md" onClick={submitReview} disabled={reviewStatus === 'submitting' || reviewStatus === 'success'}>
+                {reviewStatus === 'submitting' ? 'Submitting…' : 'Submit Review'}
+              </Button>
             </div>
           </div>
         </div>

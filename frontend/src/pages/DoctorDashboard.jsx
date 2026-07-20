@@ -31,6 +31,7 @@ const DoctorDashboard = () => {
   const [profileFormDirty, setProfileFormDirty] = useState(false);
   const [passwordResetStatus, setPasswordResetStatus] = useState(null);
   const [selectedApt, setSelectedApt] = useState(null); // For full summary modal (Task 16)
+  const [statusError, setStatusError] = useState(''); // inline error for status/severity updates
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -108,22 +109,24 @@ const DoctorDashboard = () => {
   };
 
   const updateStatus = async (appointmentId, status) => {
+    setStatusError('');
     try {
       await api.patch(`/api/appointments/${appointmentId}/status`, { status });
       setAppointments((prev) => prev.map((apt) => (apt.id === appointmentId ? { ...apt, status } : apt)));
     } catch (err) {
       console.error(err);
-      alert('Failed to update appointment status.');
+      setStatusError('Failed to update appointment status. Please try again.');
     }
   };
 
   const overrideSeverity = async (appointmentId, newSeverity) => {
+    setStatusError('');
     try {
       await api.patch(`/api/appointments/${appointmentId}/severity`, { severity: newSeverity });
       setAppointments(prev => prev.map(apt => apt.id === appointmentId ? { ...apt, severity: newSeverity } : apt));
     } catch (err) {
       console.error(err);
-      alert('Failed to override severity');
+      setStatusError('Failed to update severity. Please try again.');
     }
   };
 
@@ -219,6 +222,12 @@ const DoctorDashboard = () => {
                   </p>
                   <h1 className="text-3xl font-extrabold text-white tracking-tight">Today's Schedule</h1>
                   <p className="mt-1 text-slate-300 font-medium">{["Great doctors listen before they speak.", "Your expertise changes lives every day.", "Every patient is someone's whole world.", "Medicine is a science of uncertainty and an art of probability.", "Healing is a matter of time, but sometimes also a matter of opportunity."][new Date().getDay() % 5]}</p>
+                  {statusError && (
+                    <div className="mt-2 flex items-center gap-2 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-2 text-sm text-red-300 font-semibold">
+                      <span className="flex-1">{statusError}</span>
+                      <button type="button" onClick={() => setStatusError('')} className="text-red-400 hover:text-red-200 text-lg leading-none">&times;</button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center rounded-2xl glass-panel p-1 border border-white/50 shadow-sm h-fit">
                   <button

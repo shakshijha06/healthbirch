@@ -1,13 +1,15 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel
 from services.firebase_service import auth, db
 from firebase_admin import firestore
 from models.schemas import DoctorCreate
+from routers.auth import require_role
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
 @router.post("/register/doctor")
-def register_doctor(doctor_data: DoctorCreate):
+def register_doctor(doctor_data: DoctorCreate, current_user: dict = Depends(require_role(["admin"]))):
+    """Admin-only: Register a new doctor account. Requires admin role."""
     try:
         user_record = auth.create_user(
             email=doctor_data.email,
