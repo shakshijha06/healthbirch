@@ -23,6 +23,7 @@ const DoctorDashboard = () => {
   const [activeTab, setActiveTab] = useState('schedule');
   const [doctorProfile, setDoctorProfile] = useState(null);
   const [doctorForm, setDoctorForm] = useState({
+    name: '',
     phone: '', clinic_name: '', clinic_address: '', experience: '',
     availableDays: [], availableSlots: []
   });
@@ -48,6 +49,7 @@ const DoctorDashboard = () => {
         if (res.data) {
           setDoctorProfile(res.data);
           setDoctorForm({
+            name: res.data.name || '',
             phone: res.data.phone || '',
             clinic_name: res.data.clinic_name || '',
             clinic_address: res.data.clinic_address || '',
@@ -129,10 +131,10 @@ const DoctorDashboard = () => {
   const confirmedAppointments = appointments.filter(a => a.status === 'confirmed').sort((a, b) => new Date(a.date) - new Date(b.date));
 
   const today = new Date();
-  today.setHours(0,0,0,0);
+  today.setHours(0, 0, 0, 0);
   const startOfWeek = new Date(today);
   startOfWeek.setDate(today.getDate() - today.getDay() + (currentWeekOffset * 7));
-  
+
   const weekDays = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date(startOfWeek);
     d.setDate(startOfWeek.getDate() + i);
@@ -213,10 +215,10 @@ const DoctorDashboard = () => {
                 <div>
                   <p className="text-sm font-bold text-secondary/80 uppercase tracking-widest mb-1">
                     Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'},{' '}
-                    {doctorProfile ? `Dr. ${doctorProfile.name?.split(' ')[0] || 'Doctor'}` : '…'} 👋
+                    {doctorProfile ? `Dr. ${doctorProfile.name?.replace(/^Dr\.?\s*/i, '').split(' ')[0] || 'Doctor'}` : '…'} 👋
                   </p>
                   <h1 className="text-3xl font-extrabold text-white tracking-tight">Today's Schedule</h1>
-                  <p className="mt-1 text-slate-300 font-medium">Manage your appointments and patient records.</p>
+                  <p className="mt-1 text-slate-300 font-medium">{["Great doctors listen before they speak.", "Your expertise changes lives every day.", "Every patient is someone's whole world.", "Medicine is a science of uncertainty and an art of probability.", "Healing is a matter of time, but sometimes also a matter of opportunity."][new Date().getDay() % 5]}</p>
                 </div>
                 <div className="flex items-center rounded-2xl glass-panel p-1 border border-white/50 shadow-sm h-fit">
                   <button
@@ -369,7 +371,7 @@ const DoctorDashboard = () => {
                                   <div className="mt-1 flex items-center gap-1">
                                     <span className="text-[8px] text-slate-400 font-bold uppercase">Pri:</span>
                                     <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-bold tracking-wider ${severityBadgeClasses(apt.severity)}`}>
-                                      {(apt.severity || 'rtn').substring(0,3)}
+                                      {(apt.severity || 'rtn').substring(0, 3)}
                                     </span>
                                   </div>
                                 </div>
@@ -607,7 +609,7 @@ const DoctorDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {[...appointments].sort((a,b) => new Date(b.date) - new Date(a.date)).map(apt => (
+                          {[...appointments].sort((a, b) => new Date(b.date) - new Date(a.date)).map(apt => (
                             <tr key={apt.id} className="border-b border-white/5 hover:bg-white/[0.04] transition">
                               <td className="px-6 py-3 text-sm font-semibold text-white">{apt.patientName || 'Patient'}</td>
                               <td className="px-6 py-3 text-sm text-slate-400">{apt.date ? new Date(apt.date).toLocaleDateString() : '—'}</td>
@@ -637,6 +639,27 @@ const DoctorDashboard = () => {
               <div className="max-w-2xl rounded-3xl border border-secondary/15 bg-secondary/[0.03] p-6 mb-6 space-y-5">
                 <h4 className="text-sm font-bold text-secondary uppercase tracking-wider flex items-center gap-2"><User className="w-4 h-4" /> Practice Details</h4>
                 <form onSubmit={saveDoctorProfile} className="space-y-4">
+                  <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-slate-400 mb-1">Display Name</label>
+                    <input
+                      type="text"
+                      value={doctorForm.name || ''}
+                      onChange={e => handleDoctorFormChange('name', e.target.value)}
+                      placeholder="Your full name"
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-secondary transition-all"
+                    />
+                  </div>
+                  {/* Email (read-only) */}
+                  <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-slate-400 mb-1">Email Address</label>
+                    <input
+                      type="text"
+                      value={doctorProfile?.email || ''}
+                      readOnly
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed"
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">Email is managed by the administrator.</p>
+                  </div>
                   {[
                     { field: 'phone', label: 'Phone Number', placeholder: '+91 98765 43210' },
                     { field: 'clinic_name', label: 'Clinic Name', placeholder: 'e.g. City Health Clinic' },

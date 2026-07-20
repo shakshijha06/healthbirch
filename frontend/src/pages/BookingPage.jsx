@@ -9,13 +9,21 @@ const BookingPage = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const doctor = location.state?.doctor;
   const recommendation = location.state?.recommendation;
 
   const [date, setDate] = useState('');
   const [timeSlot, setTimeSlot] = useState('');
-  const [symptoms, setSymptoms] = useState(recommendation?.summary || '');
+  const [symptoms, setSymptoms] = useState(() => {
+    if (!recommendation) return '';
+    const parts = [];
+    if (recommendation.advice) parts.push(`AI Assessment: ${recommendation.advice}`);
+    if (recommendation.recommended_specialist) parts.push(`Recommended Specialist: ${recommendation.recommended_specialist}`);
+    if (recommendation.severity) parts.push(`Triage Severity: ${recommendation.severity}`);
+    if (recommendation.city) parts.push(`Patient Location: ${recommendation.city}`);
+    return parts.join('\n\n');
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -83,8 +91,8 @@ const BookingPage = () => {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background p-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="flex items-center text-slate-500 hover:text-primary font-medium mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
@@ -100,7 +108,7 @@ const BookingPage = () => {
             <h1 className="text-2xl font-bold text-slate-900">{doctor.name}</h1>
             <div className="flex gap-2 items-center mt-2">
               <Badge variant="specialty">{doctor.specialization}</Badge>
-              <span className="text-slate-500 text-sm flex items-center"><MapPin className="w-4 h-4 mr-1"/>{doctor.city}</span>
+              <span className="text-slate-500 text-sm flex items-center"><MapPin className="w-4 h-4 mr-1" />{doctor.city}</span>
             </div>
 
             <p className="text-slate-600 mt-2 text-sm">Experience: {doctor.experience || 'Not specified'}</p>
@@ -112,25 +120,24 @@ const BookingPage = () => {
           {/* Date Selection */}
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-              <CalendarCheck className="w-5 h-5 mr-2 text-primary"/> Select a Date
+              <CalendarCheck className="w-5 h-5 mr-2 text-primary" /> Select a Date
             </h2>
             <div className="flex overflow-x-auto pb-4 gap-3 snap-x">
               {upcomingDays.map((d, i) => {
                 const dateString = d.toISOString().split('T')[0];
                 const dayName = getDayName(dateString);
                 const isAvailable = !doctor.availableDays || doctor.availableDays.includes(dayName);
-                
+
                 return (
-                  <div 
+                  <div
                     key={i}
                     onClick={() => isAvailable && setDate(dateString)}
-                    className={`snap-center shrink-0 w-24 p-3 rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all ${
-                      !isAvailable 
-                        ? 'bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed' 
-                        : date === dateString 
-                          ? 'bg-primary border-primary text-white shadow-md scale-105' 
-                          : 'bg-white border-slate-200 hover:border-primary hover:bg-primary-light'
-                    }`}
+                    className={`snap-center shrink-0 w-24 p-3 rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all ${!isAvailable
+                      ? 'bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed'
+                      : date === dateString
+                        ? 'bg-primary border-primary text-white shadow-md scale-105'
+                        : 'bg-white border-slate-200 hover:border-primary hover:bg-primary-light'
+                      }`}
                   >
                     <span className={`text-xs font-semibold uppercase ${date === dateString ? 'text-primary-light' : 'text-slate-500'}`}>{d.toLocaleDateString('en-US', { month: 'short' })}</span>
                     <span className="text-2xl font-bold my-1">{d.getDate()}</span>
@@ -144,7 +151,7 @@ const BookingPage = () => {
           {/* Time Selection */}
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-primary"/> Select a Time
+              <Clock className="w-5 h-5 mr-2 text-primary" /> Select a Time
             </h2>
             {slots.length === 0 ? (
               <div className="p-4 rounded-xl border border-dashed border-slate-200 text-center text-sm text-slate-500">
@@ -153,14 +160,13 @@ const BookingPage = () => {
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                 {slots.map((slot, i) => (
-                  <div 
+                  <div
                     key={i}
                     onClick={() => setTimeSlot(slot)}
-                    className={`p-3 rounded-xl border text-center text-sm cursor-pointer transition-all font-medium ${
-                      timeSlot === slot 
-                        ? 'bg-primary border-primary text-white shadow-md' 
-                        : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-primary-light'
-                    }`}
+                    className={`p-3 rounded-xl border text-center text-sm cursor-pointer transition-all font-medium ${timeSlot === slot
+                      ? 'bg-primary border-primary text-white shadow-md'
+                      : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-primary-light'
+                      }`}
                   >
                     {slot}
                   </div>
@@ -173,11 +179,10 @@ const BookingPage = () => {
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
             <h2 className="text-lg font-bold text-slate-800 mb-2">Context for the Doctor</h2>
             <p className="text-sm text-slate-500 mb-4">We've pre-filled this based on your chat. Feel free to add more details.</p>
-            <textarea 
+            <textarea
               value={symptoms}
               onChange={(e) => setSymptoms(e.target.value)}
-              className="w-full h-32 p-4 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-sm resize-none bg-slate-50"
-              placeholder="Describe your symptoms..."
+              className="w-full h-48 p-4 rounded-xl border border-white/10 bg-[#0d1b3e] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-sm resize-none text-white placeholder-slate-400" placeholder="Describe your symptoms..."
             />
           </div>
 
@@ -198,7 +203,7 @@ const BookingPage = () => {
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Appointment Confirmed!</h2>
             <p className="text-slate-600 text-sm mb-8">
-              You are scheduled to see <strong className="text-slate-800">{doctor.name}</strong> on <br/>
+              You are scheduled to see <strong className="text-slate-800">{doctor.name}</strong> on <br />
               <strong className="text-slate-800">{new Date(date).toLocaleDateString()} at {timeSlot}</strong>.
             </p>
             <Button className="w-full" onClick={() => navigate('/patient/dashboard')}>

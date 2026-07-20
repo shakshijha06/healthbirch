@@ -256,6 +256,19 @@ Defined in `tailwind.config.js`:
   20. [x] Split doctor list to its own "Medical Staff" sidebar tab (replaces old embedded list) ✅
   21. [x] Remove placeholder Activity Log tab from Admin panel (removed from sidebar + view) ✅
   22. [x] Restrict Registration page to patient registers only (role tabs removed, informational badge added) ✅
+
+  * **[BUG — AI Chat blank screen]** The AI Assistant tab in PatientDashboard.jsx was showing a blank screen after a code edit introduced an IIFE wrapper `(() => { const [showHistory, setShowHistory] = React.useState(false); ... })()` around the chat section — this violates React's rules of hooks. Fixed by moving `showHistory` state to top-level component state and removing the IIFE wrapper. ✅
+* **[FEATURE — Chat History + New Chat]** Removed the `showHistory` toggle state, History button, and collapsible history panel as requested. Kept the "New Chat" button and AI context features fully intact.
+
+* **[FEATURE — AI Consultation count]** `aiConsultationsCount` now reads from `user.medicalHistory.length` instead of in-memory message count — persists across refreshes.
+
+* **[FEATURE — Booking context pre-fill]** BookingPage.jsx symptoms textarea now pre-fills from `recommendation.advice` (was incorrectly reading `recommendation.summary`). Textarea styled dark (`bg-[#0d1b3e]`, `text-white`, `h-48`) so pre-filled text is visible.
+
+* **[FEATURE — AI summary detail]** Gemini system prompt updated so the `summary` field generates a detailed 100+ word pre-consultation clinical brief instead of a one-liner.
+
+* **[FEATURE — Doctor settings]** DoctorDashboard.jsx Settings tab now includes editable Display Name and read-only Email Address fields. `doctorForm` state and `fetchDoctorProfile` both include `name` field. Motivational quote rotates daily via `new Date().getDay() % 5`.
+
+* **[FIX — Dr. Dr. greeting]** Doctor greeting used to double-prefix "Dr." Fixed by stripping existing Dr. prefix before adding one: `doctorProfile.name?.replace(/^Dr\.?\s*/i, '').split(' ')[0]`.
 * **Final Build**: `npm run build` → ✅ Passed (1.06s)
 * **Post-Batch Fixes**: Restored red-style "Sign Out" button to all three dashboards pinned to the bottom of the sidebar with tooltips. ✅
 * **Git Setup**: Initialized Git repository, configured `.gitignore` (excludes `serviceAccountKey.json`, node_modules, etc.), committed under `Initial commit — HEALTHBIRCH v1.0`, and pushed to remote `main` branch at `https://github.com/shakshijha06/healthbirch`. ✅
