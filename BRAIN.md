@@ -259,6 +259,10 @@ Defined in `tailwind.config.js`:
 * **Final Build**: `npm run build` → ✅ Passed (1.06s)
 * **Post-Batch Fixes**: Restored red-style "Sign Out" button to all three dashboards pinned to the bottom of the sidebar with tooltips. ✅
 * **Git Setup**: Initialized Git repository, configured `.gitignore` (excludes `serviceAccountKey.json`, node_modules, etc.), committed under `Initial commit — HEALTHBIRCH v1.0`, and pushed to remote `main` branch at `https://github.com/shakshijha06/healthbirch`. ✅
+* **Bug Fixes (July 2026)**:
+  * **[BUG 1 — Fixed]** Health Profile save returning 422: `HealthProfile` Pydantic model in `users.py` updated to accept `Union[str, List[str]]` for `medications`, `conditions`, `allergies` with a `field_validator` to coerce arrays to comma-joined strings. `update_profile` now merges into existing Firestore `healthProfile` instead of replacing it (preserves AI summary). Frontend `useEffect` also sanitises array values from Firestore before loading into the settings form.
+  * **[BUG 2 — Fixed]** Display name not editable for Google Sign-In: Added editable `displayName` input + `saveDisplayName` handler to Patient Settings. On save it calls Firebase Auth `updateProfile()` and `PUT /api/users/profile` with `{ name }`, with success/error toast messages.
+  * **[FEATURE — AI Context Injection]** Gemini AI chat was context-blind (no knowledge of the patient). Fixed by: (1) `gemini_service.py` — `get_ai_response()` accepts optional `system_prompt` param, injected as-is into the prompt; (2) `chat.py` — on every chat request, loads the patient's Firestore `healthProfile`, builds a rich `build_system_prompt()` with all 11 fields + city-aware referral rules + triage thresholds; (3) new `GET /api/chat/opening-message` endpoint returns a dynamic greeting (profile-filled vs empty variant); (4) `AiChatWidget.jsx` — fetches the opening message from the backend on first open (via `useRef` guard). Build: ✅ 1.02s.
 * **Phase History**:
   * **Phase 1**: Rebrand brand guidelines & logo references. ✅
   * **Phase 2**: Redesigned Auth screens with deep navy palettes. ✅

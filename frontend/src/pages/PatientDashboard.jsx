@@ -2,21 +2,21 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CalendarCheck, LogOut, MessageSquare, Search, Send, Sparkles, Star, X, Menu, Calendar, Clock, MapPin, Award, Activity, Heart, ShieldAlert, BookOpen, Settings, User } from 'lucide-react';
 import logo from '../assets/healthbirch-logo.png';
-import { signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { signOut, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import api from '../services/api';
 import { auth } from '../services/firebase';
 import { Button } from '../components/shared/Button';
 import { Badge } from '../components/shared/Badge';
 import { useAuth } from '../context/AuthContext';
 
-const CITY_OPTIONS = [ 
-  'Any', 
-  'Mumbai', 
-  'Delhi', 
-  'Bangalore', 
-  'Kolkata', 
-  'Chennai', 
-  'Hyderabad', 
+const CITY_OPTIONS = [
+  'Any',
+  'Mumbai',
+  'Delhi',
+  'Bangalore',
+  'Kolkata',
+  'Chennai',
+  'Hyderabad',
   'Ahmedabad',
   'Pune',
   'Jaipur',
@@ -150,6 +150,32 @@ const PatientDashboard = () => {
   const [smsAlerts, setSmsAlerts] = useState(() => localStorage.getItem('hb_smsAlerts') === 'true');
   const [passwordResetStatus, setPasswordResetStatus] = useState(null);
 
+  // Display name (Bug 2 fix)
+  const [displayName, setDisplayName] = useState('');
+  const [nameSaveStatus, setNameSaveStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
+  useEffect(() => {
+    setDisplayName(user?.name || user?.email?.split('@')[0] || '');
+  }, [user?.name, user?.email]);
+
+  const saveDisplayName = async () => {
+    if (!displayName.trim()) return;
+    setNameSaveStatus('saving');
+    try {
+      // Update Firebase Auth display name
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: displayName.trim() });
+      }
+      // Persist to Firestore
+      await api.put('/api/users/profile', { name: displayName.trim() });
+      setNameSaveStatus('saved');
+      setTimeout(() => setNameSaveStatus(null), 3000);
+    } catch (err) {
+      console.error('Name save error:', err);
+      setNameSaveStatus('error');
+      setTimeout(() => setNameSaveStatus(null), 4000);
+    }
+  };
+
   // Daily water intake state (Task 8)
   const [waterIntake, setWaterIntake] = useState(() => Number(localStorage.getItem('hb_waterIntake') || '1.5'));
 
@@ -176,10 +202,20 @@ const PatientDashboard = () => {
   const [profileFormDirty, setProfileFormDirty] = useState(false);
   const [expandedCountry, setExpandedCountry] = useState('India');
 
-  // Populate form when user loads
+  // Helper: coerce array values (from onboarding) to comma-separated strings
+  const coerceToStr = (v) => Array.isArray(v) ? v.join(', ') : (v || '');
+
+  // Populate form when user loads — sanitise arrays from onboarding
   useEffect(() => {
     if (user?.healthProfile) {
-      setHealthProfileForm(prev => ({ ...prev, ...user.healthProfile }));
+      const hp = user.healthProfile;
+      setHealthProfileForm(prev => ({
+        ...prev,
+        ...hp,
+        medications: coerceToStr(hp.medications),
+        conditions:  coerceToStr(hp.conditions),
+        allergies:   coerceToStr(hp.allergies),
+      }));
     }
   }, [user?.healthProfile]);
 
@@ -198,6 +234,8 @@ const PatientDashboard = () => {
       setProfileFormDirty(false);
     } catch (err) {
       console.error('Profile save error:', err);
+      console.error("Backend response:", err.response?.data);
+      console.error("Status:", err.response?.status);
       setProfileSaveStatus('error');
     }
   };
@@ -250,16 +288,16 @@ const PatientDashboard = () => {
 
   useEffect(() => {
     if (location.state?.goToFind) {
-       setActiveTab('find');
-       const aiSpecialty = location.state.specialty || '';
-       const aiCity = location.state.city || 'Any';
-       setSpecialtyQuery(aiSpecialty);
-       if (aiCity !== 'Any' && !cityOptions.includes(aiCity)) {
-         setCityOptions(prev => [...prev, aiCity]);
-       }
-       setCity(aiCity);
-       findDoctors(aiSpecialty, aiCity);
-       navigate('/patient/doctors', { replace: true, state: {} });
+      setActiveTab('find');
+      const aiSpecialty = location.state.specialty || '';
+      const aiCity = location.state.city || 'Any';
+      setSpecialtyQuery(aiSpecialty);
+      if (aiCity !== 'Any' && !cityOptions.includes(aiCity)) {
+        setCityOptions(prev => [...prev, aiCity]);
+      }
+      setCity(aiCity);
+      findDoctors(aiSpecialty, aiCity);
+      navigate('/patient/doctors', { replace: true, state: {} });
     }
   }, [location.state, navigate, cityOptions]);
 
@@ -341,7 +379,7 @@ const PatientDashboard = () => {
 
   const upcomingAppointments = useMemo(() => {
     return appointments.filter(a => {
-      const isPastDate = new Date(a.date) < new Date(new Date().setHours(0,0,0,0));
+      const isPastDate = new Date(a.date) < new Date(new Date().setHours(0, 0, 0, 0));
       return a.status !== 'cancelled' && a.status !== 'canceled' && a.status !== 'completed' && !isPastDate;
     }).sort((a, b) => new Date(a.date) - new Date(b.date));
   }, [appointments]);
@@ -357,7 +395,7 @@ const PatientDashboard = () => {
 
   const combinedHistory = useMemo(() => {
     const aptHistory = appointments
-      .filter(a => a.status === 'completed' || new Date(a.date) < new Date(new Date().setHours(0,0,0,0)))
+      .filter(a => a.status === 'completed' || new Date(a.date) < new Date(new Date().setHours(0, 0, 0, 0)))
       .map(a => ({
         id: a.id,
         isAppointment: true,
@@ -491,7 +529,7 @@ const PatientDashboard = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-[#0a0a0f] via-[#0d1b3e] to-[#0a0a0f] overflow-hidden text-white font-sans">
-      
+
       {/* Sidebar - Collapsible desktop sidebar */}
       <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} shrink-0 border-r border-white/5 bg-white/5 backdrop-blur-md hidden md:flex flex-col transition-all duration-300 relative z-20 h-screen sticky top-0`}>
         <div className="p-4 flex items-center justify-between">
@@ -505,8 +543,8 @@ const PatientDashboard = () => {
               <span className="text-base font-bold tracking-tight text-white">HEALTHBIRCH</span>
             </button>
           )}
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={() => setSidebarOpen(prev => !prev)}
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all mx-auto"
             aria-label="Toggle sidebar"
@@ -569,11 +607,11 @@ const PatientDashboard = () => {
       {/* Main content pane */}
       <main className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col min-w-0">
         <div className="mx-auto max-w-6xl w-full flex-1 flex flex-col">
-          
+
           {/* ===== 1. DASHBOARD HOME VIEW ===== */}
           {activeTab === 'home' && (
             <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
-              
+
               {/* Welcome Banner */}
               <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-primary to-primary-dark border border-white/10 p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.4)_1px,transparent_0)] [background-size:12px_12px]" />
@@ -604,14 +642,14 @@ const PatientDashboard = () => {
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Daily Water Intake</p>
                   <p className="mt-2 text-2xl md:text-3xl font-extrabold text-cyan-400">{waterIntake.toFixed(2)} L / 3.00 L</p>
                   <div className="flex gap-2 mt-3 items-center">
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setWaterIntake(prev => { const val = Math.max(0, prev - 0.25); localStorage.setItem('hb_waterIntake', val.toString()); return val; })}
                       className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-sm font-bold text-white transition-all select-none"
                     >
                       -
                     </button>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => setWaterIntake(prev => { const val = Math.min(10, prev + 0.25); localStorage.setItem('hb_waterIntake', val.toString()); return val; })}
                       className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-sm font-bold text-white transition-all select-none"
@@ -625,10 +663,10 @@ const PatientDashboard = () => {
 
               {/* Main Landing Split Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                
+
                 {/* Left Columns (Booking/Recommend details) */}
                 <div className="lg:col-span-2 space-y-6">
-                  
+
                   {/* Pinned Bookings */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">Upcoming appointments <span className="h-2 w-2 rounded-full bg-secondary" /></h3>
@@ -649,7 +687,7 @@ const PatientDashboard = () => {
                                 <span className="text-xs text-slate-400 font-semibold">{apt.specialization} &bull; 📍 {apt.city || 'Clinic'}</span>
                               </div>
                             </div>
-                             <div className="flex flex-col items-end gap-1.5 text-right">
+                            <div className="flex flex-col items-end gap-1.5 text-right">
                               <span className="text-xs font-bold text-white block">{new Date(apt.date).toLocaleDateString()}</span>
                               <span className="text-[10px] text-slate-400 font-semibold">{apt.timeSlot}</span>
                               <div className="flex gap-2 items-center">
@@ -657,7 +695,7 @@ const PatientDashboard = () => {
                                   {apt.status}
                                 </span>
                                 {apt.status === 'pending' && (
-                                  <button 
+                                  <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); cancelAppointment(apt.id); }}
                                     className="px-2 py-0.5 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 font-bold rounded text-[9px] transition-colors"
@@ -699,7 +737,7 @@ const PatientDashboard = () => {
 
                 {/* Right columns (AI assessments & Tips) */}
                 <div className="space-y-6">
-                  
+
                   {/* Latest AI screening card */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white">Triage Status Check</h3>
@@ -717,7 +755,7 @@ const PatientDashboard = () => {
                         <p className="text-xs text-slate-300 italic">"{recommendation.advice}"</p>
                         {recommendation.city && <span className="text-[11px] text-slate-400 block">📍 Filter Location: {recommendation.city}</span>}
                         {recommendation.recommendDoctor !== false ? (
-                          <Button 
+                          <Button
                             className="w-full text-xs py-2 rounded-full"
                             onClick={() => findDoctors(recommendation.recommended_specialist, recommendation.city)}
                           >
@@ -857,14 +895,14 @@ const PatientDashboard = () => {
               </header>
 
               <div className="flex space-x-2 border-b border-white/5 pb-2">
-                <button 
-                  onClick={() => setAppointmentFilter('upcoming')} 
+                <button
+                  onClick={() => setAppointmentFilter('upcoming')}
                   className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all ${appointmentFilter === 'upcoming' ? 'bg-secondary text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                 >
                   Active & Pending
                 </button>
-                <button 
-                  onClick={() => setAppointmentFilter('past')} 
+                <button
+                  onClick={() => setAppointmentFilter('past')}
                   className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all ${appointmentFilter === 'past' ? 'bg-secondary text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                 >
                   Consultation Logs
@@ -884,7 +922,7 @@ const PatientDashboard = () => {
                   {appointments
                     .filter(apt => {
                       const isCancelled = apt.status === 'cancelled' || apt.status === 'canceled';
-                      const isPastDate = new Date(apt.date) < new Date(new Date().setHours(0,0,0,0));
+                      const isPastDate = new Date(apt.date) < new Date(new Date().setHours(0, 0, 0, 0));
                       const isPast = isCancelled || isPastDate || apt.status === 'completed';
                       return appointmentFilter === 'upcoming' ? !isPast : isPast;
                     })
@@ -910,7 +948,7 @@ const PatientDashboard = () => {
                               {apt.status}
                             </span>
                             {apt.status === 'pending' && appointmentFilter === 'upcoming' && (
-                              <button 
+                              <button
                                 onClick={() => cancelAppointment(apt.id)}
                                 className="px-3 py-1 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 font-semibold rounded-lg text-[10px] transition-colors"
                               >
@@ -918,7 +956,7 @@ const PatientDashboard = () => {
                               </button>
                             )}
                             {appointmentFilter === 'past' && apt.status !== 'cancelled' && (
-                              <button 
+                              <button
                                 onClick={() => { setReviewPayload({ doctorId: apt.doctorId, doctorName: apt.doctorName, rating: 5, comment: '' }); setReviewModalOpen(true); }}
                                 className="px-3 py-1 border border-secondary/35 text-secondary hover:bg-secondary/15 font-semibold rounded-lg text-[10px] transition"
                               >
@@ -929,12 +967,12 @@ const PatientDashboard = () => {
                         </div>
                       </div>
                     ))}
-                    {appointments.filter(apt => {
-                      const isCancelled = apt.status === 'cancelled' || apt.status === 'canceled';
-                      const isPastDate = new Date(apt.date) < new Date(new Date().setHours(0,0,0,0));
-                      const isPast = isCancelled || isPastDate || apt.status === 'completed';
-                      return appointmentFilter === 'upcoming' ? !isPast : isPast;
-                    }).length === 0 && (
+                  {appointments.filter(apt => {
+                    const isCancelled = apt.status === 'cancelled' || apt.status === 'canceled';
+                    const isPastDate = new Date(apt.date) < new Date(new Date().setHours(0, 0, 0, 0));
+                    const isPast = isCancelled || isPastDate || apt.status === 'completed';
+                    return appointmentFilter === 'upcoming' ? !isPast : isPast;
+                  }).length === 0 && (
                       <div className="py-8 text-center text-slate-400">No {appointmentFilter} appointments identified.</div>
                     )}
                 </div>
@@ -978,8 +1016,8 @@ const PatientDashboard = () => {
                   </select>
                 </div>
 
-                <button 
-                  onClick={() => findDoctors(specialtyQuery, city)} 
+                <button
+                  onClick={() => findDoctors(specialtyQuery, city)}
                   disabled={loadingDoctors}
                   className="px-6 py-3 bg-secondary hover:bg-secondary-light font-bold text-sm text-white rounded-2xl transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 shrink-0 h-11 pointer-events-auto"
                 >
@@ -1041,118 +1079,118 @@ const PatientDashboard = () => {
             </div>
           )}
 
-        {/* ===== 6. EMERGENCY CONTACTS VIEW ===== */}
-        {activeTab === 'emergency' && (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            <header className="mb-4">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                Emergency Resources <ShieldAlert className="w-6 h-6 text-red-500" />
-              </h1>
-              <p className="text-xs md:text-sm text-slate-300">Immediate hotlines and clinical references. Call 911/112 for local emergency response agencies.</p>
-            </header>
+          {/* ===== 6. EMERGENCY CONTACTS VIEW ===== */}
+          {activeTab === 'emergency' && (
+            <div className="space-y-6 animate-in fade-in duration-500">
+              <header className="mb-4">
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+                  Emergency Resources <ShieldAlert className="w-6 h-6 text-red-500" />
+                </h1>
+                <p className="text-xs md:text-sm text-slate-300">Immediate hotlines and clinical references. Call 911/112 for local emergency response agencies.</p>
+              </header>
 
-            <div className="space-y-4 max-w-3xl">
-              {[
-                {
-                  country: 'India',
-                  code: 'IN',
-                  contacts: [
-                    { label: 'Ambulance', number: '102', color: 'text-red-400' },
-                    { label: 'Police', number: '100', color: 'text-slate-300' },
-                    { label: 'Fire', number: '101', color: 'text-slate-300' },
-                    { label: 'National Helpline (Single Emergency Number)', number: '112', color: 'text-red-400 font-extrabold' },
-                    { label: 'Women Helpline', number: '1091', color: 'text-pink-400' },
-                    { label: 'Senior Citizen Helpline', number: '14567', color: 'text-slate-300' }
-                  ]
-                },
-                {
-                  country: 'United States',
-                  code: 'US',
-                  contacts: [
-                    { label: 'General Emergency', number: '911', color: 'text-red-400 font-extrabold' },
-                    { label: 'Suicide & Crisis Lifeline', number: '988', color: 'text-amber-400' },
-                    { label: 'Poison Control', number: '+1 (800) 222-1222', color: 'text-slate-300' }
-                  ]
-                },
-                {
-                  country: 'United Kingdom',
-                  code: 'GB',
-                  contacts: [
-                    { label: 'General Emergency', number: '999 or 112', color: 'text-red-400 font-extrabold' },
-                    { label: 'National Health Service (NHS) Advice', number: '111', color: 'text-teal-400' },
-                    { label: 'Police (Non-emergency)', number: '101', color: 'text-slate-300' }
-                  ]
-                },
-                {
-                  country: 'Canada',
-                  code: 'CA',
-                  contacts: [
-                    { label: 'General Emergency', number: '911', color: 'text-red-400 font-extrabold' },
-                    { label: 'Health Information (Telehealth)', number: '811', color: 'text-slate-300' }
-                  ]
-                },
-                {
-                  country: 'Australia',
-                  code: 'AU',
-                  contacts: [
-                    { label: 'Emergency (Triple Zero)', number: '000', color: 'text-red-400 font-extrabold' },
-                    { label: 'State Emergency Service (SES)', number: '132 500', color: 'text-slate-300' }
-                  ]
-                },
-                {
-                  country: 'Germany',
-                  code: 'DE',
-                  contacts: [
-                    { label: 'Ambulance & Fire', number: '112', color: 'text-red-400 font-extrabold' },
-                    { label: 'Police', number: '110', color: 'text-slate-300' },
-                    { label: 'Non-emergency Medical Service', number: '116 117', color: 'text-slate-300' }
-                  ]
-                },
-                {
-                  country: 'France',
-                  code: 'FR',
-                  contacts: [
-                    { label: 'European Emergency Number', number: '112', color: 'text-red-400 font-extrabold' },
-                    { label: 'Ambulance (SAMU)', number: '15', color: 'text-red-400' },
-                    { label: 'National Police', number: '17', color: 'text-slate-300' },
-                    { label: 'Fire Brigade', number: '18', color: 'text-slate-300' }
-                  ]
-                },
-                {
-                  country: 'United Arab Emirates',
-                  code: 'AE',
-                  contacts: [
-                    { label: 'Ambulance', number: '998', color: 'text-red-400' },
-                    { label: 'Police', number: '999', color: 'text-red-400 font-extrabold' },
-                    { label: 'Fire (Civil Defence)', number: '997', color: 'text-slate-300' }
-                  ]
-                },
-                {
-                  country: 'Singapore',
-                  code: 'SG',
-                  contacts: [
-                    { label: 'Ambulance & Fire (Emergency)', number: '995', color: 'text-red-400 font-extrabold' },
-                    { label: 'Police', number: '999', color: 'text-slate-300' },
-                    { label: 'Ambulance (Non-emergency)', number: '1777', color: 'text-slate-300' }
-                  ]
-                }
-              ].map(c => {
-                const isOpen = expandedCountry === c.country;
-                return (
-                  <div key={c.country} className="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm overflow-hidden transition-all duration-300">
-                    <button
-                      type="button"
-                      onClick={() => setExpandedCountry(isOpen ? '' : c.country)}
-                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/[0.03] transition-colors"
-                    >
-                      <span className="font-bold text-white flex items-center gap-3 text-base md:text-lg animate-in fade-in duration-300">
-                        <span className="text-xs font-extrabold px-2.5 py-1 rounded bg-[#60A5FA]/20 border border-[#60A5FA]/20 text-[#60A5FA] font-sans tracking-wide">{c.code}</span>
-                        <span>{c.country}</span>
-                      </span>
-                      <span className="text-slate-400 font-bold transition-transform duration-300" style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
-                        ▶
-                      </span>
-                    </button>
+              <div className="space-y-4 max-w-3xl">
+                {[
+                  {
+                    country: 'India',
+                    code: 'IN',
+                    contacts: [
+                      { label: 'Ambulance', number: '102', color: 'text-red-400' },
+                      { label: 'Police', number: '100', color: 'text-slate-300' },
+                      { label: 'Fire', number: '101', color: 'text-slate-300' },
+                      { label: 'National Helpline (Single Emergency Number)', number: '112', color: 'text-red-400 font-extrabold' },
+                      { label: 'Women Helpline', number: '1091', color: 'text-pink-400' },
+                      { label: 'Senior Citizen Helpline', number: '14567', color: 'text-slate-300' }
+                    ]
+                  },
+                  {
+                    country: 'United States',
+                    code: 'US',
+                    contacts: [
+                      { label: 'General Emergency', number: '911', color: 'text-red-400 font-extrabold' },
+                      { label: 'Suicide & Crisis Lifeline', number: '988', color: 'text-amber-400' },
+                      { label: 'Poison Control', number: '+1 (800) 222-1222', color: 'text-slate-300' }
+                    ]
+                  },
+                  {
+                    country: 'United Kingdom',
+                    code: 'GB',
+                    contacts: [
+                      { label: 'General Emergency', number: '999 or 112', color: 'text-red-400 font-extrabold' },
+                      { label: 'National Health Service (NHS) Advice', number: '111', color: 'text-teal-400' },
+                      { label: 'Police (Non-emergency)', number: '101', color: 'text-slate-300' }
+                    ]
+                  },
+                  {
+                    country: 'Canada',
+                    code: 'CA',
+                    contacts: [
+                      { label: 'General Emergency', number: '911', color: 'text-red-400 font-extrabold' },
+                      { label: 'Health Information (Telehealth)', number: '811', color: 'text-slate-300' }
+                    ]
+                  },
+                  {
+                    country: 'Australia',
+                    code: 'AU',
+                    contacts: [
+                      { label: 'Emergency (Triple Zero)', number: '000', color: 'text-red-400 font-extrabold' },
+                      { label: 'State Emergency Service (SES)', number: '132 500', color: 'text-slate-300' }
+                    ]
+                  },
+                  {
+                    country: 'Germany',
+                    code: 'DE',
+                    contacts: [
+                      { label: 'Ambulance & Fire', number: '112', color: 'text-red-400 font-extrabold' },
+                      { label: 'Police', number: '110', color: 'text-slate-300' },
+                      { label: 'Non-emergency Medical Service', number: '116 117', color: 'text-slate-300' }
+                    ]
+                  },
+                  {
+                    country: 'France',
+                    code: 'FR',
+                    contacts: [
+                      { label: 'European Emergency Number', number: '112', color: 'text-red-400 font-extrabold' },
+                      { label: 'Ambulance (SAMU)', number: '15', color: 'text-red-400' },
+                      { label: 'National Police', number: '17', color: 'text-slate-300' },
+                      { label: 'Fire Brigade', number: '18', color: 'text-slate-300' }
+                    ]
+                  },
+                  {
+                    country: 'United Arab Emirates',
+                    code: 'AE',
+                    contacts: [
+                      { label: 'Ambulance', number: '998', color: 'text-red-400' },
+                      { label: 'Police', number: '999', color: 'text-red-400 font-extrabold' },
+                      { label: 'Fire (Civil Defence)', number: '997', color: 'text-slate-300' }
+                    ]
+                  },
+                  {
+                    country: 'Singapore',
+                    code: 'SG',
+                    contacts: [
+                      { label: 'Ambulance & Fire (Emergency)', number: '995', color: 'text-red-400 font-extrabold' },
+                      { label: 'Police', number: '999', color: 'text-slate-300' },
+                      { label: 'Ambulance (Non-emergency)', number: '1777', color: 'text-slate-300' }
+                    ]
+                  }
+                ].map(c => {
+                  const isOpen = expandedCountry === c.country;
+                  return (
+                    <div key={c.country} className="rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm overflow-hidden transition-all duration-300">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedCountry(isOpen ? '' : c.country)}
+                        className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/[0.03] transition-colors"
+                      >
+                        <span className="font-bold text-white flex items-center gap-3 text-base md:text-lg animate-in fade-in duration-300">
+                          <span className="text-xs font-extrabold px-2.5 py-1 rounded bg-[#60A5FA]/20 border border-[#60A5FA]/20 text-[#60A5FA] font-sans tracking-wide">{c.code}</span>
+                          <span>{c.country}</span>
+                        </span>
+                        <span className="text-slate-400 font-bold transition-transform duration-300" style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                          ▶
+                        </span>
+                      </button>
                       {isOpen && (
                         <div className="px-6 pb-5 pt-1 space-y-3 border-t border-white/5 divide-y divide-white/5 text-sm select-text">
                           {c.contacts.map((contact, idx) => (
@@ -1240,20 +1278,37 @@ const PatientDashboard = () => {
               </div>
 
               {/* ── Account Info ── */}
-              <div className="max-w-2xl rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm p-6 space-y-4">
-                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Account</h4>
-                <div className="space-y-3">
+              <div className="max-w-2xl rounded-2xl border border-secondary/15 bg-secondary/[0.03] backdrop-blur-sm p-6 space-y-4">
+                <h4 className="text-sm font-bold text-secondary uppercase tracking-wider flex items-center gap-2"><User className="w-4 h-4" /> Account Details</h4>
+                <div className="space-y-4">
                   <div className="flex flex-col">
-                    <span className="text-xs text-slate-400 font-semibold mb-1">Display Name</span>
-                    <div className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm font-semibold text-white">
-                      {user?.name || user?.email?.split('@')[0] || '–'}
+                    <label className="text-xs text-slate-400 font-semibold mb-1">Display Name</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={displayName}
+                        onChange={e => { setDisplayName(e.target.value); setNameSaveStatus(null); }}
+                        placeholder="Your display name"
+                        className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-secondary transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={saveDisplayName}
+                        disabled={nameSaveStatus === 'saving' || !displayName.trim()}
+                        className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-bold bg-secondary hover:bg-secondary-light text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {nameSaveStatus === 'saving' ? 'Saving…' : 'Save'}
+                      </button>
                     </div>
+                    {nameSaveStatus === 'saved' && <span className="text-xs text-emerald-400 font-semibold mt-1">✓ Display name updated</span>}
+                    {nameSaveStatus === 'error' && <span className="text-xs text-red-400 font-semibold mt-1">Failed to save. Try again.</span>}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs text-slate-400 font-semibold mb-1">Email Address</span>
                     <div className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/5 text-sm font-semibold text-white">
                       {user?.email || '–'}
                     </div>
+                    <span className="text-xs text-slate-500 mt-1">Email cannot be changed here.</span>
                   </div>
                 </div>
               </div>
@@ -1341,12 +1396,12 @@ const PatientDashboard = () => {
           <div className="w-full max-w-md bg-[#0A1F44] border border-white/10 text-white rounded-3xl shadow-2xl overflow-hidden p-6 animate-in zoom-in-95 duration-200">
             <h3 className="text-xl font-bold text-white mb-2">Review {reviewPayload.doctorName}</h3>
             <p className="text-xs text-slate-400 mb-6 font-semibold">How was your appointment experience?</p>
-            
+
             <div className="mb-4">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Rating</label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => setReviewPayload({...reviewPayload, rating: star})} className={`p-2 rounded-full transition ${reviewPayload.rating >= star ? 'text-yellow-400 bg-yellow-400/10' : 'text-slate-400 hover:bg-white/5'}`}>
+                  <button key={star} onClick={() => setReviewPayload({ ...reviewPayload, rating: star })} className={`p-2 rounded-full transition ${reviewPayload.rating >= star ? 'text-yellow-400 bg-yellow-400/10' : 'text-slate-400 hover:bg-white/5'}`}>
                     <Star className="h-7 w-7" fill={reviewPayload.rating >= star ? 'currentColor' : 'none'} />
                   </button>
                 ))}
@@ -1354,8 +1409,8 @@ const PatientDashboard = () => {
             </div>
 
             <div className="mb-6">
-               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Comment</label>
-               <textarea rows={3} value={reviewPayload.comment} onChange={(e) => setReviewPayload({...reviewPayload, comment: e.target.value})} className="w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-secondary resize-none font-semibold" placeholder="Share details of your experience..." />
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Comment</label>
+              <textarea rows={3} value={reviewPayload.comment} onChange={(e) => setReviewPayload({ ...reviewPayload, comment: e.target.value })} className="w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-secondary resize-none font-semibold" placeholder="Share details of your experience..." />
             </div>
 
             <div className="flex gap-3 justify-end">

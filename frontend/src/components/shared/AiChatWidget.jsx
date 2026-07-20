@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'; // Import React plus hooks for widget state and stable derived values.
+import React, { useMemo, useState, useEffect, useRef } from 'react'; // Import React plus hooks for widget state and stable derived values.
 import { useNavigate } from 'react-router-dom'; // Import router navigation helper to redirect users to search organically.
 import { Bot, Send, X, Search, ShieldCheck, Sparkles } from 'lucide-react'; // Import lucide icons for the bot button, send action, and close action.
 import api from '../../services/api'; // Import the shared Axios API client that already adds Firebase auth headers.
@@ -14,6 +14,7 @@ const AiChatWidget = () => { // Declare the floating AI widget component.
   const [inputValue, setInputValue] = useState(''); // Store the current text in the widget input field.
   const [loadingChat, setLoadingChat] = useState(false); // Track whether the widget is waiting for the AI response.
   const [recommendation, setRecommendation] = useState(null); // Store the latest AI recommendation payload for the specialty card.
+  const fetchedOpening = useRef(false); // Guard: fetch the personalised opening message only once per mount.
 
   const canChat = useMemo(() => { // Derive a boolean indicating whether the current user is allowed to call /api/chat.
     return Boolean(user && user.role === 'patient'); // Only allow chat when the backend role guard permits patients.
@@ -22,6 +23,22 @@ const AiChatWidget = () => { // Declare the floating AI widget component.
   const canSend = useMemo(() => { // Derive whether the send action should be enabled.
     return canChat && inputValue.trim().length > 0 && !loadingChat; // Ensure patient role, non-empty input, and not currently loading.
   }, [canChat, inputValue, loadingChat]); // Recompute when dependencies change.
+
+  // Fetch personalised opening message from the backend on first open.
+  useEffect(() => {
+    if (!isOpen || !canChat || fetchedOpening.current) return;
+    fetchedOpening.current = true;
+    api.get('/api/chat/opening-message')
+      .then(res => {
+        const greeting = res.data?.message;
+        if (greeting) {
+          setMessages([{ id: 'w0', role: 'model', content: greeting }]);
+        }
+      })
+      .catch(() => {
+        // Silently fall back to the hardcoded seed message already in state.
+      });
+  }, [isOpen, canChat]);
 
   const handleClose = () => { // Define handler that closes the popup.
     setIsOpen(false); // Update state to collapse the popup.

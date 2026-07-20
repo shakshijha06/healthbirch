@@ -27,10 +27,12 @@ If you need more information (like symptoms, pain rating, or city), respond ONLY
 
 Always respond with valid JSON only. Never add markdown or extra text outside the JSON."""
 
-def get_ai_response(messages: list[dict]) -> dict:
+def get_ai_response(messages: list[dict], system_prompt: str = None) -> dict:
     try:
         if len(messages) == 0:
             return {"message": "Please describe your symptoms so I can help.", "recommendation": None}
+
+        active_system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
 
         conversation = ""
         for m in messages[:-1]:
@@ -38,7 +40,7 @@ def get_ai_response(messages: list[dict]) -> dict:
             conversation += f"{role}: {m['content']}\n"
 
         last_message = messages[-1]["content"]
-        full_prompt = f"{SYSTEM_PROMPT}\n\nConversation so far:\n{conversation}\nPatient: {last_message}\nAssistant:"
+        full_prompt = f"{active_system_prompt}\n\nConversation so far:\n{conversation}\nPatient: {last_message}\nAssistant:"
 
         response = client.models.generate_content(
             model="gemini-2.5-flash",
