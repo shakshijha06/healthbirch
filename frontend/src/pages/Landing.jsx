@@ -82,7 +82,7 @@ const Landing = () => { // Declare the Landing component that renders the public
               <span className="block text-secondary-light mt-2">Care starts with one chat.</span> {/* Present highlighted second line using secondary accent color. */}
             </h1> {/* End hero headline. */}
             <p className="mt-6 max-w-xl text-base leading-relaxed text-slate-300 md:text-lg"> {/* Render explanatory hero subtext with readable line length. */}
-              HealthBirch helps patients describe symptoms in plain language, then connects them to the right specialist in minutes with a seamless appointment flow. {/* Explain the core platform workflow in one polished statement. */}
+              HealthBirch empowers patients to describe their symptoms in everyday language, uses AI to recommend the most appropriate specialist, and enables seamless appointment booking—all in just a few minutes. {/* Explain the core platform workflow in one polished statement. */}
             </p> {/* End hero subtext. */}
             <div className="mt-10 flex flex-wrap gap-4"> {/* Render dual CTA buttons with generous spacing and rounded-pill style. */}
               <Link to="/register"> {/* Link primary CTA to registration flow for conversion. */}
@@ -120,7 +120,7 @@ const Landing = () => { // Declare the Landing component that renders the public
           </div> {/* End hero right visual column. */}
         </div> {/* End hero two-column wrapper. */}
       </section> {/* End hero section. */}
- 
+
       <section className="border-y border-white/5 bg-primary-dark/30 px-4 py-16 relative overflow-hidden" ref={statsSectionRef} data-animate="stats"> {/* Render stats section on light gray background and mark for observer animation. */}
         <div className="absolute inset-0 opacity-[0.03] [background-image:radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.5)_1px,transparent_0)] [background-size:24px_24px]" />
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 sm:grid-cols-3 relative z-10"> {/* Create responsive three-column stats grid. */}
@@ -138,7 +138,7 @@ const Landing = () => { // Declare the Landing component that renders the public
           </div> {/* End third stat card. */}
         </div> {/* End stats grid wrapper. */}
       </section> {/* End stats section. */}
- 
+
       <section id="how-it-works" className="bg-[#0a0a0f] px-4 py-20 border-y border-white/5" data-animate="steps"> {/* Render how-it-works section on dark navy with subtle borders. */}
         <div className="mx-auto max-w-7xl"> {/* Constrain section width for centered readable layout. */}
           <div className="mx-auto mb-14 max-w-2xl text-center"> {/* Render section heading block with centered copy. */}
@@ -148,9 +148,9 @@ const Landing = () => { // Declare the Landing component that renders the public
           <div className="relative grid grid-cols-1 gap-6 md:grid-cols-3"> {/* Build responsive three-step card grid with line connector support. */}
             <div className={`pointer-events-none absolute left-[18%] right-[18%] top-10 hidden h-0.5 origin-left bg-gradient-to-r from-white/10 via-white/30 to-white/10 md:block ${stepsVisible ? 'animate-draw-line' : 'scale-x-0'}`} /> {/* Render animated connector line between step cards on desktop. */}
             {[ // Start mapped step content list for reusable card generation.
-              { icon: Bot, title: 'Describe your symptoms', text: 'Tell our AI how you feel in simple language, just like texting a receptionist.' }, // Define first step content with AI/chat context.
-              { icon: Stethoscope, title: 'Get matched instantly', text: 'HealthBirch recommends the right specialty based on your symptom pattern and urgency.' }, // Define second step content for matching logic.
-              { icon: CalendarCheck, title: 'Book with confidence', text: 'Pick a convenient doctor and time slot, then confirm your appointment right away.' }, // Define third step content for booking action.
+              { icon: Bot, title: 'Talk to the AI like a friend', text: 'Describe what you are feeling in plain language — no medical terms needed. The AI listens, asks follow-ups, and understands.' }, // Define first step content with AI/chat context.
+              { icon: Stethoscope, title: 'Get matched to the right specialist instantly', text: 'Based on your symptoms and urgency, HEALTHBIRCH recommends the exact specialty you need — no more guessing or wrong appointments.' }, // Define second step content for matching logic.
+              { icon: CalendarCheck, title: 'Book in seconds, not hours', text: 'Choose your doctor, pick a slot that works for you, and confirm instantly. Your appointment summary goes straight to the doctor.' }, // Define third step content for booking action.
             ].map((step, index) => ( // Iterate step definitions to render each card consistently.
               <article key={step.title} className={`relative z-10 card glass-panel p-8 opacity-0 ${stepsVisible ? 'translate-y-0 opacity-100' : 'translate-y-6'}`} style={{ transitionDelay: `${index * 120}ms` }}> {/* Render step card with timed reveal and requested hover behavior. */}
                 <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.08] shadow-inner text-secondary"> {/* Render circular icon holder with light indigo background. */}
@@ -163,7 +163,7 @@ const Landing = () => { // Declare the Landing component that renders the public
           </div> {/* End steps grid. */}
         </div> {/* End how-it-works container. */}
       </section> {/* End how-it-works section. */}
- 
+
       <section className="border-y border-white/5 bg-primary-dark/30 px-4 py-20 relative overflow-hidden" data-animate="features"> {/* Render feature cards section on light-gray background and observe for reveal. */}
         <div className="absolute inset-0 opacity-[0.03] [background-image:radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.5)_1px,transparent_0)] [background-size:24px_24px]" />
         <div className="mx-auto max-w-7xl relative z-10"> {/* Constrain features section to readable centered width. */}
@@ -173,9 +173,9 @@ const Landing = () => { // Declare the Landing component that renders the public
           </div> {/* End features heading block. */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3"> {/* Render responsive three-column feature card layout. */}
             {[ // Define feature card content list for mapping.
-              { title: 'AI triage support', text: 'Collect key symptom details and route patients to relevant specialists.' }, // Define feature one value proposition.
-              { title: 'Faster booking flow', text: 'Reduce friction with direct specialist recommendations and available slots.' }, // Define feature two value proposition.
-              { title: 'Role-based dashboards', text: 'Give patients, doctors, and admins focused tools for daily workflows.' }, // Define feature three value proposition.
+              { title: 'AI-powered symptom triage', text: 'The AI conducts a dynamic pre-consultation interview, collects symptom history, assigns a severity score, and routes patients to exactly the right specialist.' }, // Define feature one value proposition.
+              { title: 'Zero-friction appointment booking', text: 'Patients go from triage result to confirmed booking in one flow — no calls, no searching, no wrong departments.' }, // Define feature two value proposition.
+              { title: 'Purpose-built role dashboards', text: 'Patients manage their health journey, doctors review AI summaries before consultations, and admins control the entire platform — each with tools built for their specific workflow.' }, // Define feature three value proposition.
             ].map((feature, index) => ( // Map features to consistent card components.
               <article key={feature.title} className={`card glass-panel p-7 opacity-0 ${featuresVisible ? 'translate-y-0 opacity-100' : 'translate-y-8'}`} style={{ transitionDelay: `${index * 120}ms` }}> {/* Render feature card with slide-up fade when section enters view. */}
                 <h3 className="text-lg font-semibold text-white">{feature.title}</h3> {/* Render feature title text. */}
@@ -185,7 +185,7 @@ const Landing = () => { // Declare the Landing component that renders the public
           </div> {/* End feature card grid. */}
         </div> {/* End features section container. */}
       </section> {/* End features section. */}
- 
+
       <section id="about" className="bg-[#0a0a0f] px-4 py-20 border-b border-white/5" data-animate="testimonials"> {/* Render testimonial section on dark navy. */}
         <div className="mx-auto max-w-7xl"> {/* Constrain testimonial section content width. */}
           <div className="mb-12 text-center"> {/* Render testimonial heading block. */}
@@ -194,9 +194,9 @@ const Landing = () => { // Declare the Landing component that renders the public
           </div> {/* End testimonial heading block. */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3"> {/* Render three testimonial cards in responsive grid. */}
             {[ // Define testimonial quotes and attributions for mapped rendering.
-              { quote: 'The symptom chat helps me triage patients much faster before consultation.', by: 'Dr. Meera K., Internal Medicine' }, // Define first testimonial content.
-              { quote: 'I found the right specialist in minutes without calling multiple clinics.', by: 'Aarav S., Patient' }, // Define second testimonial content.
-              { quote: 'The clean dashboard makes doctor onboarding and scheduling very efficient.', by: 'Clinic Admin, Pune' }, // Define third testimonial content.
+              { quote: 'I live in a small town with limited specialists nearby. HEALTHBIRCH found me the right doctor in the next city and handled the booking completely.', by: 'Priya Nair, Patient — Satara' }, // Define first testimonial content.
+              { quote: 'What impressed me most is that the AI never oversteps — it always clarifies it is not a diagnosis which is the right approach for healthcare.', by: 'Dr. Sameer Joshi, Psychiatrist — Kokilaben Hospital, Mumbai' }, // Define second testimonial content.
+              { quote: 'Booking for my elderly mother used to take hours of calls. HEALTHBIRCH matched her to the right cardiologist in one conversation.', by: 'Sneha Iyer, Patient — Chennai' }, // Define third testimonial content.
             ].map((item, index) => ( // Map testimonial content to card components.
               <article key={item.by} className={`card p-7 opacity-0 ${testimonialsVisible ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDelay: `${index * 180}ms` }}> {/* Render testimonial card with staggered fade-in delay. */}
                 <p className="text-sm leading-relaxed text-slate-300">"{item.quote}"</p> {/* Render quoted testimonial statement. */}

@@ -258,6 +258,7 @@ Defined in `tailwind.config.js`:
   22. [x] Restrict Registration page to patient registers only (role tabs removed, informational badge added) ✅
 * **Final Build**: `npm run build` → ✅ Passed (1.06s)
 * **Post-Batch Fixes**: Restored red-style "Sign Out" button to all three dashboards pinned to the bottom of the sidebar with tooltips. ✅
+* **Git Setup**: Initialized Git repository, configured `.gitignore` (excludes `serviceAccountKey.json`, node_modules, etc.), committed under `Initial commit — HEALTHBIRCH v1.0`, and pushed to remote `main` branch at `https://github.com/shakshijha06/healthbirch`. ✅
 * **Phase History**:
   * **Phase 1**: Rebrand brand guidelines & logo references. ✅
   * **Phase 2**: Redesigned Auth screens with deep navy palettes. ✅
